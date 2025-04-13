@@ -1,0 +1,111 @@
+A retriever is a component in langchain that fetches relevant documents from a data source in response to a user's query.
+
+There are multiple types of retrievers.
+
+All retrievers in Langchain are runnables.(Means we can plugged them into a chain)
+
+Data source <-----Retriever(Query)-----> Documents
+
+Types of retrievers:
+1. Data Source category:
+    - WikipediaRetriever: Wikipedia
+    - VectorStoreRetriever: Vector Store
+    - ArxivRetriever: Arxiv (Scanned the research papers)
+
+2. Retriever Search Strategy category:
+    - Maximum Marginal Relevance (MMR) Retriever
+    - Multi-Query Retriever
+    - Contextual Compression Retriever
+
+A. WikipediaRetriever:
+   It is a retriever that queries the Wikipedia API to fetch relevant documents based on a user's query.
+
+   How it Works?
+   - You give it a query (e.g, "Indian premier league 2025")
+   - It sends the query to the Wikipedia API.
+   - It retrieves the most relevant articles.
+   - It returns them as Langchain Document objects.
+
+B. VectorStoreRetriever:
+    It is the most common type of retriever that lets you search and fetch documents from a vector store based on semantic similarity using vector embeddings.
+
+    How it Works?
+    - You store your documents in a vector store (e.g, FAISS, Pinecone, Weaviate, ChromaDB).
+    - Each document is converted into a dense vector using an embedding model.
+    - When the user enters a query:
+      . It's also turned into a vector.
+      . The retriever compares the query vector with the stored vectors.
+      . It retrieves the top-k most similar ones.
+
+C. Maximal Marginal Relevance(MMR):
+    "How can we pick results that are not only relevant to the query  but also different from each other?"
+
+    It is an information retrieval algorithm designed to reduce redundancy in the retrieved results while maintaining high relevance to the query.
+
+    Why MMR Retriever?
+    In regular search similarity you may got documents that are : All very similar to each other, Repeating the same info, Lacking diverse perspectives.
+
+    MMR Retrieves avoids that by:
+    - Picking the most relevant document first.
+    - Then picking the next most relevant and least similar to already selected docs.
+    - And so on ..
+
+    This helps especially in RAG pipelines where:
+    - You want your context window to contain diverse but still relevant information.
+    - especially useful when documents are semantically overlapping.
+
+D. Multi-Query-Retriever:
+    "Sometimes a single query might not capture all the ways information is planned in your documents."
+    Example:
+    Query:  "How can i stay healthy?"
+    Could mean:
+         - What should i eat ?
+         - How often should i exercise?
+         - How can i manage stress?
+    A simple similarity might miss documents that talk about those things but don't use the word "healthy".
+
+    - Takes your original Query.
+    - Uses an LLM(e.g. GPT-3.5) to generate multiple semantically different versions of that query .
+    - Performs retrieval for each sub-query.
+    - Combines and deduplicates the results.
+
+    Like below:
+    - Original Query: "How can i stay healthy?"
+    - Sub-Queries:
+        1. "What are the best foods to maintain good health?"
+        2. "How often should i exercise to stay fit?"
+        3. "What lifestyles habits improve mental and physical wellness?"
+        4. "How can i boost my immune system naturally?"
+        5. "What daily routines support long-term health?"
+
+E. Contextual Compression Retriever:
+    It is an advanced retriever in langchain that improves retrieval quality by compressing documents after retrieval - keeping only the relevant content based on the user's query.
+
+    Query: "What is photosynthesis?"
+
+    Retrieved Document(by a traditional retriever):
+     "The Grand canyon is a famous natural site.
+      PhotoSynthesis is how plats convert light into energy.
+      Many tourists visit every year."
+
+      Problem:
+       - The retriever returns the entire paragraph.
+       - Only one sentence is actually relevant to the query.
+       - The rest is irrelevant noise that wastes context window and may confuse the LLM.
+
+      What Contextual Compression Retriever does:
+        Returns only the relevant part e.g,
+        "Photosynthesis is how plants convert light into energy."
+
+    How it works:
+     - Base Retriever(e.g, FAISS, Chroma) retrieves N documents.
+     - A compressor (usually an LLM) is applied to each documents.
+     - The compressor keeps only the parts relevant to the query.
+     - Irrelevant contents are discarded.
+
+    When to use?
+     - When you have large documents with a lot of irrelevant information.
+     - You want to reduce context lengths for LLM.
+     - You need to improve answer accuracy in RAG pipelines.
+
+- Other retrievers: BM25Retriever, ParentDocumentRetriever, SelfQueryRetriever, TimeWeightedVectorRetriever, EnsembleRetriever, MultiVectorRetriever, ArxivRetriever.
